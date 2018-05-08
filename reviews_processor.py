@@ -13,7 +13,7 @@ def main():
     # _count_ngrams(2, lexicon_dictionary)
     # _count_ngrams(3, lexicon_dictionary)
     reviews = _process_reviews(lexicon_dictionary)
-    #_write_reviews(reviews, 'xxx_reviews.csv')
+    _write_reviews(reviews, 'clean_reviews.csv')
 
 
 def _process_reviews(lexicon_dictionary):
