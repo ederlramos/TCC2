@@ -10,18 +10,18 @@ from nltk import ngrams
 
 def main():
     lexicon_dictionary = _read_lexicon()
-    reviews = _process_reviews(lexicon_dictionary)
-    # xpto = [r[0] for r in _sample_records(reviews, 0.20)]
-    # _calculate_document_frequency(10, 1, xpto)
-    # _calculate_document_frequency(10, 2, xpto)
-    # _calculate_document_frequency(10, 3, xpto)
-    _write_reviews(_sample_records(reviews, 0.20), 'clean_reviews_v4.csv')
+    reviews = _process_reviews('raw_reviews.csv', lexicon_dictionary)
+    # sample = [r[0] for r in _sample_records(reviews, 0.20)]
+    # _calculate_document_frequency(10, 1, sample)
+    # _calculate_document_frequency(10, 2, sample)
+    # _calculate_document_frequency(10, 3, sample)
+    _write_reviews(_sample_records(reviews, 0.20), 'clean_reviews.csv')
 
 
-def _process_reviews(lexicon_dictionary):
+def _process_reviews(reviews_file_path, lexicon_dictionary):
     review_counter = [0,0,0,0,0]
     reviews = []
-    with open('raw_reviews.csv') as raw_file:
+    with open(reviews_file_path) as raw_file:
         csv_file = csv.reader(raw_file, delimiter=',')
         for row in csv_file:
             rating = row[2]
@@ -82,7 +82,7 @@ def _sample_records(reviews, percentage):
 
     review_counter = [0,0,0,0,0]
     for review in positive_reviews:
-        review_counter[int(review[3]) - 1] += 1    
+        review_counter[int(review[3]) - 1] += 1
     
     print('Sample size:', len(positive_reviews))
     return positive_reviews
