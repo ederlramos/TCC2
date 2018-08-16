@@ -11,12 +11,17 @@ from nltk import ngrams
 def main():
     records = _read_records()
     print('Analyzing {} records'.format(len(records)))
-    split_reviews = _split_data(records)
+    # split_reviews = _split_data(records)
+    split_reviews = [r[1] for r in records]
     
-    for reviews in split_reviews:
-        print('Analyzing {} reviews by rating {}'.format(len(reviews), split_reviews.index(reviews) + 1))
-        _count_top_ngrams(20, 2, reviews)
-        _count_top_ngrams(20, 3, reviews)
+    #for reviews in split_reviews:
+        #print('Analyzing {} reviews by rating {}'.format(len(reviews), split_reviews.index(reviews) + 1))
+    _calculate_document_frequency(10, 1, split_reviews)
+        # _count_top_ngrams(20, 1, reviews)
+        # _count_top_ngrams(10, 2, reviews)
+        # _count_top_inversion_ngrams(10, 2, reviews)
+        # _count_top_ngrams(10, 3, reviews)
+        # _count_top_inversion_ngrams(10, 3, reviews)
 
 
 def _read_records():
@@ -49,22 +54,65 @@ def _split_data(records):
     return [one_star, two_star, three_star, four_star, five_star]
 
 
+def _calculate_document_frequency(n, ngram_size, records):
+    ngram_df = {}
+    for row in records:
+        sanitized = _remove_stopwords(row.translate(str.maketrans('', '', string.punctuation)))
+        record_ngrams = ngrams(sanitized.split(), ngram_size)
+        for ngram in set(record_ngrams):
+            if '-'.join(ngram) in ngram_df:
+                ngram_df['-'.join(ngram)] += 1
+            else:
+                ngram_df['-'.join(ngram)] = 1
+    sorted_ngrams = sorted(ngram_df.items(), key=operator.itemgetter(1))
+    sorted_ngrams.reverse()
+    print('-- DF about {} grams --'.format(ngram_size))
+    print('Unique ngrams:', len(ngram_df))
+    print('top {} N-Grams:'.format(n))
+    for i, ngram in enumerate(sorted_ngrams):
+        print(ngram)
+        if i == n:
+            break
+
+
 
 def _count_top_ngrams(n, ngram_size, records):
-    ngram_result = {}
+    ngram_tf = {}
     for row in records:
         sanitized = _remove_stopwords(row.translate(str.maketrans('', '', string.punctuation)))
         record_ngrams = ngrams(sanitized.split(), ngram_size)
         for ngram in record_ngrams:
-            if '-'.join(ngram) in ngram_result:
-                ngram_result['-'.join(ngram)] += 1
+            if '-'.join(ngram) in ngram_tf:
+                ngram_tf['-'.join(ngram)] += 1
             else:
-                ngram_result['-'.join(ngram)] = 1
-    sorted_ngrams = sorted(ngram_result.items(), key=operator.itemgetter(1))
+                ngram_tf['-'.join(ngram)] = 1
+    sorted_ngrams = sorted(ngram_tf.items(), key=operator.itemgetter(1))
     sorted_ngrams.reverse()
     print('-- metadata about {} grams --'.format(ngram_size))
-    print('Unique ngrams:', len(ngram_result))
+    print('Unique ngrams:', len(ngram_tf))
     print('top {} N-Grams:'.format(n))
+    for i, ngram in enumerate(sorted_ngrams):
+        print(ngram)
+        if i == n:
+            break
+
+
+def _count_top_inversion_ngrams(n, ngram_size, records):
+    ngram_tf = {}
+    for row in records:
+        sanitized = _remove_stopwords(row.translate(str.maketrans('', '', string.punctuation)))
+        record_ngrams = ngrams(sanitized.split(), ngram_size)
+        for ngram in record_ngrams:
+            if 'não' in ngram or 'nunca' in ngram or 'jamais' in ngram or 'nao' in ngram:
+                if '-'.join(ngram) in ngram_tf:
+                    ngram_tf['-'.join(ngram)] += 1
+                else:
+                    ngram_tf['-'.join(ngram)] = 1
+    sorted_ngrams = sorted(ngram_tf.items(), key=operator.itemgetter(1))
+    sorted_ngrams.reverse()
+    print('-- metadata about {} grams --'.format(ngram_size))
+    print('Unique ngrams:', len(ngram_tf))
+    print('top {} inversion N-Grams:'.format(n))
     for i, ngram in enumerate(sorted_ngrams):
         print(ngram)
         if i == n:

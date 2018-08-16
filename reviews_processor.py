@@ -7,13 +7,15 @@ from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk import ngrams
 
+
 def main():
     lexicon_dictionary = _read_lexicon()
-    # _count_ngrams(1, lexicon_dictionary)
-    # _count_ngrams(2, lexicon_dictionary)
-    # _count_ngrams(3, lexicon_dictionary)
     reviews = _process_reviews(lexicon_dictionary)
-    _write_reviews(reviews, 'clean_reviews.csv')
+    # xpto = [r[0] for r in _sample_records(reviews, 0.20)]
+    # _calculate_document_frequency(10, 1, xpto)
+    # _calculate_document_frequency(10, 2, xpto)
+    # _calculate_document_frequency(10, 3, xpto)
+    _write_reviews(_sample_records(reviews, 0.20), 'clean_reviews_v4.csv')
 
 
 def _process_reviews(lexicon_dictionary):
@@ -25,65 +27,65 @@ def _process_reviews(lexicon_dictionary):
             rating = row[2]
             if rating == '1':
                 review_counter[0] += 1
-                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'negative'])
-            if rating == '2':
+                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'negative', rating])
+            elif rating == '2':
                 review_counter[1] += 1
-                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'negative'])
-            if rating == '3':
+                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'negative', rating])
+            elif rating == '3':
                 review_counter[2] += 1
-                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'negative'])
-            if rating == '4':
+                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'positive', rating])
+            elif rating == '4':
                 review_counter[3] += 1
-                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'positive'])
-            if rating == '5':
+                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'positive', rating])
+            elif rating == '5':
                 review_counter[4] += 1
-                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'positive'])
+                reviews.append([row[1], _sanitize_record(row[1], lexicon_dictionary), 'positive', rating])
     print('Sample division by stars:', review_counter)
     print('Total records:', sum(review_counter))
     return reviews
 
 
-def _count_ngrams(n, lexicon_dictionary):
-    ngram_result = {}
-    with open('teste.csv') as raw_file:
-        csv_file = csv.reader(raw_file, delimiter=',')
-        for row in csv_file:
-            sanitized = _remove_stopwords(row[0].translate(str.maketrans('', '', string.punctuation)))
-            records_ngrams = ngrams(sanitized.split(), n)
-            for ngram in records_ngrams:
-                if '-'.join(ngram) in ngram_result:
-                    ngram_result['-'.join(ngram)] += 1
-                else:
-                    ngram_result['-'.join(ngram)] = 1
-    sorted_ngrams = sorted(ngram_result.items(), key=operator.itemgetter(1))
+def _calculate_document_frequency(n, ngram_size, records):
+    ngram_df = {}
+    for row in records:
+        sanitized = _remove_stopwords(row.translate(str.maketrans('', '', string.punctuation)))
+        record_ngrams = ngrams(sanitized.split(), ngram_size)
+        for ngram in set(record_ngrams):
+            if '-'.join(ngram) in ngram_df:
+                ngram_df['-'.join(ngram)] += 1
+            else:
+                ngram_df['-'.join(ngram)] = 1
+    sorted_ngrams = sorted(ngram_df.items(), key=operator.itemgetter(1))
     sorted_ngrams.reverse()
-    print('-- metadata about {} grams --'.format(n))
-    print('unique ngrams count', len(ngram_result))
-    print('top 20 N-Grams')
-    for i, record in enumerate(sorted_ngrams):
-        print(record)
-        if i == 20:
+    print('-- DF about {} grams --'.format(ngram_size))
+    print('Unique ngrams:', len(ngram_df))
+    print('top {} N-Grams:'.format(n))
+    for i, ngram in enumerate(sorted_ngrams):
+        print(ngram)
+        if i == n:
             break
 
 
-def _detect_anomaly_candidate(record, clean_record, rating, lexicon_dictionary):
-    polarity = 0
-    considered_tokens = []
-    for token in clean_record.split(' '):
-        try:
-            if lexicon_dictionary[token] == 'pos':
-                polarity += 1
-                considered_tokens.append(token)
-            else:
-                polarity += -1
-                considered_tokens.append(token)
-        except Exception:
-            pass
+def _sample_records(reviews, percentage):
+    positive_reviews = []
+    negative_reviews = []
 
-    if polarity > 0 and rating == 'negative':
-        print('{} anomaly candidate detected: {} \n considered tokens: {} \n'.format(rating, record, considered_tokens))
-    elif polarity <= 0 and rating == 'positive':
-        print('{} anomaly candidate detected: {} \n considered tokens: {} \n'.format(rating, record, considered_tokens))
+    for review in reviews:
+        if review[2] == 'negative':
+            negative_reviews.append(review)
+        else:
+            positive_reviews.append(review)
+    
+    positive_reviews = positive_reviews[1:math.floor(len(positive_reviews) * percentage)]
+    negative_reviews = negative_reviews[1:math.floor(len(negative_reviews) * percentage)]
+    positive_reviews.extend(negative_reviews)
+
+    review_counter = [0,0,0,0,0]
+    for review in positive_reviews:
+        review_counter[int(review[3]) - 1] += 1    
+    
+    print('Sample size:', len(positive_reviews))
+    return positive_reviews
 
 
 def _sanitize_record(record, lexicon_dictionary):
@@ -112,7 +114,7 @@ def _preprocess_text(text, lexicon_dictionary):
 def _write_reviews(reviews, file_name):
     _write_compact_reviews(reviews, 'compact_' + file_name)
     with open(file_name, mode='w') as output:
-        for review in reviews:            
+        for review in reviews:
             if len(review) > 0:
                 output.write(review[0] + ',' + review[1] + ',' + review[2] + '\n')
 

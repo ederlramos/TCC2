@@ -27183,5 +27183,8 @@ zombáveis,neg
 íntegr,pos
 ódio,neg
 ótim,pos
+ótima,pos
+ótimas,pos
 ótimo,pos
+ótimos,pos
 ônus,neg

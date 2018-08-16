@@ -9,9 +9,7 @@ def main():
     corpus, labels_true = _read_corpus()
     vectorizer = text.TfidfVectorizer()
     input_data = vectorizer.fit_transform(corpus)
-    db = DBSCAN(eps=0.98, min_samples=10).fit(input_data)
-    core_samples_mask = numpy.zeros_like(db.labels_, dtype=bool)
-    core_samples_mask[db.core_sample_indices_] = True
+    db = DBSCAN(eps=0.97, min_samples=10).fit(input_data)
     labels = db.labels_
 
     counter = collections.Counter(labels_true)
@@ -28,13 +26,13 @@ def main():
         '0':{
             -1:0,
             0:0,
-            1:0
+            1:0,
         },
         '1':{
             -1:0,
             0:0,
-            1:0
-        },
+            1:0,
+        }
     }
      
     for j in range(0, len(labels_true)):
@@ -52,7 +50,7 @@ def _calculate_accuracy(hits, records):
 def _read_corpus():
     data = []
     labels = []
-    with open('clean_reviews.csv') as reviews:
+    with open('compact_clean_reviews_v4.csv') as reviews:
         for review in reviews:
             str_review = review.rstrip().split(',')
             data.append(str_review[0])
